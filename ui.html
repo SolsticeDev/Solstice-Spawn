@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Advanced Spawn Selector</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: transparent;
+            color: #fff;
+            height: 100vh;
+            overflow: hidden;
+            display: none;
+        }
+        
+        .container {
+            display: flex;
+            height: 100%;
+            width: 100%;
+            background: rgba(10, 10, 10, 0.85);
+        }
+        
+        /* Sidebar Styles */
+        .sidebar {
+            width: 320px;
+            background: rgba(20, 20, 20, 0.95);
+            padding: 20px;
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .logo h1 {
+            font-size: 28px;
+            background: linear-gradient(45deg, #3498db, #8e44ad);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: 1px;
+        }
+        
+        .logo p {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        
+        .search-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        
+        .search-container input {
+            width: 100%;
+            padding: 12px 15px;
+            padding-left: 40px;
+            background: rgba(30, 30, 30, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .search-container input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        
+        .search-container i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .spawn-list {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        
+        .spawn-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .spawn-list-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .spawn-count {
+            background: rgba(52, 152, 219, 0.2);
+            color: #3498db;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        
+        .spawn-item {
+            background: rgba(30, 30, 30, 0.8);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .spawn-item:hover {
+            background: rgba(50, 50, 50, 0.8);
+            transform: translateY(-2px);
+            border-color: rgba(52, 152, 219, 0.3);
+        }
+        
+        .spawn-item.active {
+            background: rgba(52, 152, 219, 0.15);
+            border: 1px solid rgba(52, 152, 219, 0.4);
+        }
+        
+        .spawn-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .spawn-item h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+        }
+        
+        .favorite-btn {
+            background: none;
+            border: none;
+            color: gold;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s;
+            padding: 5px;
+        }
+        
+        .favorite-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .spawn-item p {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+            display: flex;
+            align-items: center;
+        }
+        
+        .spawn-item p i {
+            margin-right: 5px;
+            color: #3498db;
+        }
+        
+        /* Main Content Styles */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 25px;
+        }
+        
+        .live-preview-notice {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .live-preview-notice i {
+            color: #2ecc71;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+        
+        .spawn-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 25px;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.9));
+            z-index: 10;
+        }
+        
+        .spawn-name {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            background: linear-gradient(45deg, #fff, #3498db);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .spawn-description {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.85);
+            max-width: 80%;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            z-index: 10;
+            position: relative;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 16px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(45deg, #9b59b6, #8e44ad);
+            color: white;
+            box-shadow: 0 4px 15px rgba(155, 89, 182, 0.3);
+        }
+        
+        .btn-secondary:hover {
+            background: linear-gradient(45deg, #8e44ad, #9b59b6);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(155, 89, 182, 0.4);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(45deg, #2980b9, #3498db);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+        }
+        
+        /* Loading and Empty States */
+        .loading-state, .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            padding: 20px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .loading-state i {
+            font-size: 48px;
+            margin-bottom: 20px;
+            color: #3498db;
+            animation: spin 1.5s linear infinite;
+        }
+        
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 20px;
+            color: rgba(255, 255, 255, 0.3);
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(52, 152, 219, 0.5);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(52, 152, 219, 0.7);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="logo">
+                <h1>SPAWN SELECTOR</h1>
+                <p>Choose your starting location</p>
+            </div>
+            
+            <div class="search-container">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Search locations...">
+            </div>
+            
+            <div class="spawn-list-header">
+                <h2>Available Locations</h2>
+                <div class="spawn-count" id="spawnCount">0 locations</div>
+            </div>
+            
+            <div class="spawn-list" id="spawnList">
+                <div class="loading-state">
+                    <i class="fas fa-spinner"></i>
+                    <p>Loading spawn locations...</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="live-preview-notice">
+                <i class="fas fa-video"></i>
+                <span>Live Camera Preview</span>
+            </div>
+            
+            <div class="spawn-info">
+                <h1 class="spawn-name" id="spawnName">Location Name</h1>
+                <p class="spawn-description" id="spawnDescription">Select this location to begin your journey</p>
+            </div>
+            
+            <div class="action-buttons">
+                <button class="btn btn-secondary" id="lastLocationBtn">
+                    <i class="fas fa-history"></i> Spawn at Last Location
+                </button>
+                <button class="btn btn-primary" id="spawnBtn">
+                    <i class="fas fa-play"></i> Spawn Now
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let spawns = [];
+        let selectedSpawn = 0;
+        let enableFavorites = false;
+        let hasLastLocation = false;
+        
+        // Post message to Lua
+        function postNUIMessage(data) {
+            fetch(`https://${GetParentResourceName()}/message`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json; charset=UTF-8',
+                },
+                body: JSON.stringify(data)
+            });
+        }
+        
+        // Initialize UI
+        window.addEventListener('DOMContentLoaded', function() {
+            // Set up message listeners
+            window.addEventListener('message', function(event) {
+                const data = event.data;
+                
+                if (data.action === 'showUI') {
+                    document.body.style.display = 'block';
+                    spawns = data.spawns;
+                    enableFavorites = data.enableFavorites;
+                    hasLastLocation = data.hasLastLocation;
+                    
+                    // Enable/disable last location button
+                    document.getElementById('lastLocationBtn').disabled = !hasLastLocation;
+                    
+                    if (spawns && spawns.length > 0) {
+                        document.getElementById('spawnCount').textContent = spawns.length + " locations";
+                        renderSpawnList();
+                        selectSpawn(0);
+                    } else {
+                        document.getElementById('spawnList').innerHTML = `
+                            <div class="empty-state">
+                                <i class="fas fa-map-marker-slash"></i>
+                                <p>No spawn locations available</p>
+                            </div>
+                        `;
+                    }
+                }
+                else if (data.action === 'hideUI') {
+                    document.body.style.display = 'none';
+                }
+            });
+            
+            // Set up event listeners
+            document.getElementById('searchInput').addEventListener('input', filterSpawns);
+            document.getElementById('lastLocationBtn').addEventListener('click', spawnLastLocation);
+            document.getElementById('spawnBtn').addEventListener('click', spawnPlayer);
+        });
+        
+        // Render spawn list
+        function renderSpawnList(filteredSpawns = null) {
+            const spawnList = document.getElementById('spawnList');
+            const itemsToRender = filteredSpawns || spawns;
+            
+            if (!itemsToRender || itemsToRender.length === 0) {
+                spawnList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-map-marker-slash"></i>
+                        <p>No locations match your search</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let listHTML = '';
+            
+            itemsToRender.forEach((spawn, index) => {
+                listHTML += `
+                    <div class="spawn-item ${index === selectedSpawn ? 'active' : ''}" data-index="${index}">
+                        <div class="spawn-item-header">
+                            <h3>${spawn.name}</h3>
+                            ${enableFavorites ? `
+                                <button class="favorite-btn" data-id="${spawn.id}">
+                                    <i class="${spawn.isFavorite ? 'fas' : 'far'} fa-star"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                        <p><i class="fas fa-map-marker-alt"></i> Spawn point #${spawn.id}</p>
+                    </div>
+                `;
+            });
+            
+            spawnList.innerHTML = listHTML;
+            
+            // Add event listeners to new items
+            document.querySelectorAll('.spawn-item').forEach(item => {
+                const index = parseInt(item.getAttribute('data-index'));
+                item.addEventListener('click', () => selectSpawn(index));
+                
+                if (enableFavorites) {
+                    const favoriteBtn = item.querySelector('.favorite-btn');
+                    if (favoriteBtn) {
+                        favoriteBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            toggleFavorite(parseInt(favoriteBtn.getAttribute('data-id')));
+                        });
+                    }
+                }
+            });
+        }
+        
+        // Filter spawns based on search
+        function filterSpawns() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            if (!searchTerm) {
+                renderSpawnList();
+                if (spawns.length > 0) {
+                    selectSpawn(selectedSpawn);
+                }
+                return;
+            }
+            
+            const filtered = spawns.filter(spawn => 
+                spawn.name.toLowerCase().includes(searchTerm)
+            );
+            
+            renderSpawnList(filtered);
+            
+            if (filtered.length > 0) {
+                selectSpawn(0);
+            }
+        }
+        
+        // Select a spawn point
+        function selectSpawn(index) {
+            if (!spawns || !spawns[index]) return;
+            
+            selectedSpawn = index;
+            const spawn = spawns[index];
+            
+            // Update UI
+            document.querySelectorAll('.spawn-item').forEach((item, i) => {
+                item.classList.toggle('active', i === index);
+            });
+            
+            document.getElementById('spawnName').textContent = spawn.name;
+            document.getElementById('spawnDescription').textContent = `Ready to spawn at ${spawn.name}`;
+            
+            // Notify Lua
+            postNUIMessage({
+                action: 'selectSpawn',
+                index: spawn.id - 1
+            });
+        }
+        
+        // Toggle favorite
+        function toggleFavorite(spawnId) {
+            const spawn = spawns.find(s => s.id === spawnId);
+            if (!spawn) return;
+            
+            postNUIMessage({
+                action: 'toggleFavorite'
+            });
+            
+            // Update UI immediately
+            spawn.isFavorite = !spawn.isFavorite;
+            const starIcon = document.querySelector(`.favorite-btn[data-id="${spawnId}"] i`);
+            if (starIcon) {
+                starIcon.className = spawn.isFavorite ? 'fas fa-star' : 'far fa-star';
+            }
+        }
+        
+        // Spawn player
+        function spawnPlayer() {
+            postNUIMessage({
+                action: 'spawnPlayer'
+            });
+        }
+        
+        // Spawn at last location
+        function spawnLastLocation() {
+            postNUIMessage({
+                action: 'spawnLastLocation'
+            });
+        }
+    </script>
+</body>
+</html>
